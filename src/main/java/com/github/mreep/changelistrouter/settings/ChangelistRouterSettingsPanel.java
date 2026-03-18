@@ -28,22 +28,29 @@ public class ChangelistRouterSettingsPanel
         this.table.setShowGrid(true);
         this.table.setRowHeight(28);
 
+        // Type column editor
+        ComboBox<PatternType> typeCombo = new ComboBox<>(PatternType.values());
+        this.table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(typeCombo));
+
+        // Changelist Name column editor — populate changelists when editing begins
         ComboBox<String> changelistCombo = new ComboBox<>();
         changelistCombo.setEditable(true);
 
-        this.table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(changelistCombo));
-
-        this.table.addPropertyChangeListener("tableCellEditor", evt -> {
-            if (this.table.isEditing() && this.table.getEditingColumn() == 1) {
-                String currentText = changelistCombo.getEditor().getItem() instanceof String s ? s : "";
+        this.table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(changelistCombo) {
+            @Override
+            public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
+            {
+                String currentText = value instanceof String s ? s : "";
 
                 changelistCombo.removeAllItems();
 
-                ChangeListManager.getInstance(this.project).getChangeLists().forEach(
+                ChangeListManager.getInstance(ChangelistRouterSettingsPanel.this.project).getChangeLists().forEach(
                     cl -> changelistCombo.addItem(cl.getName())
                 );
 
                 changelistCombo.getEditor().setItem(currentText);
+
+                return super.getTableCellEditorComponent(table, currentText, isSelected, row, column);
             }
         });
 
@@ -93,7 +100,7 @@ public class ChangelistRouterSettingsPanel
         List<RouteMapping> copy = new ArrayList<>();
 
         for (RouteMapping m : this.mappings) {
-            copy.add(new RouteMapping(m.getPattern(), m.getChangelistName()));
+            copy.add(new RouteMapping(m.getPattern(), m.getChangelistName(), m.getPatternType()));
         }
 
         return copy;
@@ -104,7 +111,7 @@ public class ChangelistRouterSettingsPanel
         this.mappings.clear();
 
         for (RouteMapping m : newMappings) {
-            this.mappings.add(new RouteMapping(m.getPattern(), m.getChangelistName()));
+            this.mappings.add(new RouteMapping(m.getPattern(), m.getChangelistName(), m.getPatternType()));
         }
 
         this.tableModel.fireTableDataChanged();
@@ -113,7 +120,7 @@ public class ChangelistRouterSettingsPanel
     private class RouteMappingTableModel extends AbstractTableModel
     {
 
-        private final String[] columnNames = {"Pattern (Regex)", "Changelist Name"};
+        private final String[] columnNames = {"Type", "Pattern", "Changelist Name"};
 
         @Override
         public int getRowCount()
@@ -124,7 +131,7 @@ public class ChangelistRouterSettingsPanel
         @Override
         public int getColumnCount()
         {
-            return 2;
+            return 3;
         }
 
         @Override
@@ -145,8 +152,9 @@ public class ChangelistRouterSettingsPanel
             RouteMapping mapping = ChangelistRouterSettingsPanel.this.mappings.get(rowIndex);
 
             return switch (columnIndex) {
-                case 0 -> mapping.getPattern();
-                case 1 -> mapping.getChangelistName();
+                case 0 -> mapping.getPatternType();
+                case 1 -> mapping.getPattern();
+                case 2 -> mapping.getChangelistName();
                 default -> "";
             };
         }
@@ -155,11 +163,11 @@ public class ChangelistRouterSettingsPanel
         public void setValueAt(Object aValue, int rowIndex, int columnIndex)
         {
             RouteMapping mapping = ChangelistRouterSettingsPanel.this.mappings.get(rowIndex);
-            String value = aValue instanceof String s ? s : "";
 
             switch (columnIndex) {
-                case 0 -> mapping.setPattern(value);
-                case 1 -> mapping.setChangelistName(value);
+                case 0 -> mapping.setPatternType(aValue instanceof PatternType pt ? pt : PatternType.REGEX);
+                case 1 -> mapping.setPattern(aValue instanceof String s ? s : "");
+                case 2 -> mapping.setChangelistName(aValue instanceof String s ? s : "");
             }
 
             fireTableCellUpdated(rowIndex, columnIndex);

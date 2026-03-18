@@ -2,9 +2,10 @@ package com.github.mreep.changelistrouter.settings;
 
 import com.intellij.util.xmlb.annotations.Tag;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class RouteMapping
 {
@@ -15,16 +16,28 @@ public class RouteMapping
     @Tag("changelistName")
     private String changelistName;
 
+    @Tag("patternType")
+    private PatternType patternType;
+
     public RouteMapping()
     {
         this.pattern = "";
         this.changelistName = "";
+        this.patternType = PatternType.REGEX;
     }
 
     public RouteMapping(String pattern, String changelistName)
     {
         this.pattern = pattern;
         this.changelistName = changelistName;
+        this.patternType = PatternType.REGEX;
+    }
+
+    public RouteMapping(String pattern, String changelistName, PatternType patternType)
+    {
+        this.pattern = pattern;
+        this.changelistName = changelistName;
+        this.patternType = patternType;
     }
 
     public String getPattern()
@@ -47,6 +60,16 @@ public class RouteMapping
         this.changelistName = changelistName;
     }
 
+    public PatternType getPatternType()
+    {
+        return this.patternType;
+    }
+
+    public void setPatternType(PatternType patternType)
+    {
+        this.patternType = patternType;
+    }
+
     public boolean matches(String path)
     {
         if (this.pattern.isBlank()) {
@@ -54,8 +77,11 @@ public class RouteMapping
         }
 
         try {
-            return Pattern.compile(this.pattern).matcher(path).find();
-        } catch (PatternSyntaxException ignored) {
+            return switch (this.patternType) {
+                case REGEX -> Pattern.compile(this.pattern).matcher(path).find();
+                case GLOB -> FileSystems.getDefault().getPathMatcher("glob:" + this.pattern).matches(Path.of(path));
+            };
+        } catch (IllegalArgumentException ignored) {
             return false;
         }
     }
@@ -73,12 +99,14 @@ public class RouteMapping
 
         RouteMapping that = (RouteMapping) o;
 
-        return Objects.equals(this.pattern, that.pattern) && Objects.equals(this.changelistName, that.changelistName);
+        return Objects.equals(this.pattern, that.pattern)
+            && Objects.equals(this.changelistName, that.changelistName)
+            && this.patternType == that.patternType;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(this.pattern, this.changelistName);
+        return Objects.hash(this.pattern, this.changelistName, this.patternType);
     }
 }

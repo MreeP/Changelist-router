@@ -57,7 +57,7 @@ public class ChangelistRouterConfigurable implements Configurable
         List<RouteMapping> copy = new ArrayList<>();
 
         for (RouteMapping m : settings.getState().getMappings()) {
-            copy.add(new RouteMapping(m.getPattern(), m.getChangelistName()));
+            copy.add(new RouteMapping(m.getPattern(), m.getChangelistName(), m.getPatternType()));
         }
 
         this.panel.setMappings(copy);

@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 
 public class ChangelistRouterListener implements ChangeListListener
@@ -40,11 +41,17 @@ public class ChangelistRouterListener implements ChangeListListener
         ChangeListManager clm = ChangeListManager.getInstance(this.project);
         Map<String, List<Change>> routedChanges = new HashMap<>();
 
+        String basePath = this.project.getBasePath();
+
         for (Change change : changes) {
             String path = ChangelistRouterListener.getChangePath(change);
 
             if (path == null) {
                 continue;
+            }
+
+            if (basePath != null) {
+                path = Path.of(basePath).relativize(Path.of(path)).toString();
             }
 
             String target = ChangelistRouterListener.findMatchingChangelist(path, mappings);
