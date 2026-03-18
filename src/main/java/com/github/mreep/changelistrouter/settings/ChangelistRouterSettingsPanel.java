@@ -3,11 +3,15 @@ package com.github.mreep.changelistrouter.settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +24,7 @@ public class ChangelistRouterSettingsPanel
     private final List<RouteMapping> mappings = new ArrayList<>();
     private final RouteMappingTableModel tableModel = new RouteMappingTableModel();
     private final JBTable table = new JBTable(this.tableModel);
+    private final JTextField testPathField = new JTextField();
     private final JComponent component;
 
     public ChangelistRouterSettingsPanel(Project project)
@@ -36,7 +41,8 @@ public class ChangelistRouterSettingsPanel
         ComboBox<String> changelistCombo = new ComboBox<>();
         changelistCombo.setEditable(true);
 
-        this.table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(changelistCombo) {
+        this.table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(changelistCombo)
+        {
             @Override
             public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
             {
@@ -83,9 +89,75 @@ public class ChangelistRouterSettingsPanel
                 }
             });
 
+        // Match column renderer
+        DefaultTableCellRenderer matchRenderer = new DefaultTableCellRenderer()
+        {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+            {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setHorizontalAlignment(SwingConstants.CENTER);
+
+                String testPath = ChangelistRouterSettingsPanel.this.testPathField.getText();
+
+                if (testPath == null || testPath.isBlank()) {
+                    setText("");
+                } else if (Boolean.TRUE.equals(value)) {
+                    setText("✓");
+
+                    if (!isSelected) {
+                        setForeground(new JBColor(new Color(0, 128, 0), new Color(0, 128, 0)));
+                    }
+                } else {
+                    setText("—");
+
+                    if (!isSelected) {
+                        setForeground(JBColor.GRAY);
+                    }
+                }
+
+                return c;
+            }
+        };
+
+        this.table.getColumnModel().getColumn(3).setCellRenderer(matchRenderer);
+        this.table.getColumnModel().getColumn(3).setPreferredWidth(60);
+        this.table.getColumnModel().getColumn(3).setMaxWidth(70);
+
+        // Test path field
+        DocumentListener refreshListener = new DocumentListener()
+        {
+            @Override
+            public void insertUpdate(DocumentEvent e)
+            {
+                ChangelistRouterSettingsPanel.this.tableModel.fireTableDataChanged();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e)
+            {
+                ChangelistRouterSettingsPanel.this.tableModel.fireTableDataChanged();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e)
+            {
+                ChangelistRouterSettingsPanel.this.tableModel.fireTableDataChanged();
+            }
+        };
+
+        this.testPathField.getDocument().addDocumentListener(refreshListener);
+
+        JPanel testPathPanel = new JPanel(new BorderLayout(8, 0));
+
+        testPathPanel.add(new JLabel("Test path:"), BorderLayout.WEST);
+        testPathPanel.add(this.testPathField, BorderLayout.CENTER);
+        testPathPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+
         JPanel panel = new JPanel(new BorderLayout());
 
         panel.add(decorator.createPanel(), BorderLayout.CENTER);
+        panel.add(testPathPanel, BorderLayout.SOUTH);
 
         this.component = panel;
     }
@@ -120,7 +192,7 @@ public class ChangelistRouterSettingsPanel
     private class RouteMappingTableModel extends AbstractTableModel
     {
 
-        private final String[] columnNames = {"Type", "Pattern", "Changelist Name"};
+        private final String[] columnNames = {"Type", "Pattern", "Changelist Name", "Match"};
 
         @Override
         public int getRowCount()
@@ -131,7 +203,7 @@ public class ChangelistRouterSettingsPanel
         @Override
         public int getColumnCount()
         {
-            return 3;
+            return 4;
         }
 
         @Override
@@ -143,7 +215,7 @@ public class ChangelistRouterSettingsPanel
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex)
         {
-            return true;
+            return columnIndex != 3;
         }
 
         @Override
@@ -155,6 +227,19 @@ public class ChangelistRouterSettingsPanel
                 case 0 -> mapping.getPatternType();
                 case 1 -> mapping.getPattern();
                 case 2 -> mapping.getChangelistName();
+                case 3 -> {
+                    String testPath = ChangelistRouterSettingsPanel.this.testPathField.getText();
+
+                    if (testPath == null || testPath.isBlank()) {
+                        yield Boolean.FALSE;
+                    }
+
+                    try {
+                        yield mapping.matches(testPath);
+                    } catch (Exception e) {
+                        yield Boolean.FALSE;
+                    }
+                }
                 default -> "";
             };
         }
