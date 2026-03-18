@@ -1,10 +1,8 @@
 # Changelist Router
 
-![Build](https://github.com/MreeP/Changelist-router/workflows/Build/badge.svg)
-<!-- Uncomment after publishing to JetBrains Marketplace and replace MARKETPLACE_ID with the actual ID:
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
--->
+[![Build](https://github.com/MreeP/Changelist-router/workflows/Build/badge.svg)](https://plugins.jetbrains.com/plugin/30779)
+[![Version](https://img.shields.io/jetbrains/plugin/v/30779.svg)](https://plugins.jetbrains.com/plugin/30779)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/30779.svg)](https://plugins.jetbrains.com/plugin/30779)
 
 <!-- Plugin description -->
 Changelist Router is an IntelliJ Platform plugin that automatically routes VCS changes to the correct changelist based on file path patterns. Define rules using glob or regex patterns and let the plugin sort your changes for you.
