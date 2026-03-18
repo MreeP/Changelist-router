@@ -1,15 +1,19 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.mreep.changelistrouter</id>
-    <name>Changelist-router</name>
-    <vendor>mreep</vendor>
+    <name>Changelist router</name>
+    <vendor>MreeP</vendor>
 
     <depends>com.intellij.modules.platform</depends>
-
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <depends>com.intellij.modules.vcs</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.mreep.changelistrouter.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.mreep.changelistrouter.startup.MyProjectActivity" />
+        <projectService serviceImplementation="com.github.mreep.changelistrouter.settings.ChangelistRouterSettings"/>
+        <projectConfigurable
+            instance="com.github.mreep.changelistrouter.settings.ChangelistRouterConfigurable"
+            id="com.github.mreep.changelistrouter.settings"
+            displayName="Changelist Router"
+            parentId="vcs"/>
+        <postStartupActivity implementation="com.github.mreep.changelistrouter.ChangelistRouterActivity"/>
     </extensions>
 </idea-plugin>
