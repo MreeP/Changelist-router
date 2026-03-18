@@ -1,6 +1,7 @@
 package com.github.mreep.changelistrouter;
 
 import com.github.mreep.changelistrouter.listener.ChangelistRouterListener;
+import com.github.mreep.changelistrouter.settings.PatternType;
 import com.github.mreep.changelistrouter.settings.RouteMapping;
 import org.junit.Test;
 
@@ -179,5 +180,22 @@ public class RegexPatternTest
         assertEquals("JVM Files", ChangelistRouterListener.findMatchingChangelist("src/Main.kt", mappings));
         assertEquals("JVM Files", ChangelistRouterListener.findMatchingChangelist("src/Main.scala", mappings));
         assertNull(ChangelistRouterListener.findMatchingChangelist("src/Main.py", mappings));
+    }
+
+    @Test
+    public void caseInsensitiveRegexMatchesIgnoringCase()
+    {
+        List<RouteMapping> mappings = List.of(new RouteMapping(".*test.*", "Tests", PatternType.REGEX, false));
+        assertEquals("Tests", ChangelistRouterListener.findMatchingChangelist("src/MyTest.kt", mappings));
+        assertEquals("Tests", ChangelistRouterListener.findMatchingChangelist("src/mytest.kt", mappings));
+        assertEquals("Tests", ChangelistRouterListener.findMatchingChangelist("src/MYTEST.kt", mappings));
+    }
+
+    @Test
+    public void caseSensitiveRegexDoesNotMatchDifferentCase()
+    {
+        List<RouteMapping> mappings = List.of(new RouteMapping(".*test.*", "Tests", PatternType.REGEX, true));
+        assertNull(ChangelistRouterListener.findMatchingChangelist("src/MyTest.kt", mappings));
+        assertEquals("Tests", ChangelistRouterListener.findMatchingChangelist("src/mytest.kt", mappings));
     }
 }

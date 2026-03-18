@@ -19,11 +19,15 @@ public class RouteMapping
     @Tag("patternType")
     private PatternType patternType;
 
+    @Tag("caseSensitive")
+    private boolean caseSensitive;
+
     public RouteMapping()
     {
         this.pattern = "";
         this.changelistName = "";
         this.patternType = PatternType.REGEX;
+        this.caseSensitive = true;
     }
 
     public RouteMapping(String pattern, String changelistName)
@@ -31,6 +35,7 @@ public class RouteMapping
         this.pattern = pattern;
         this.changelistName = changelistName;
         this.patternType = PatternType.REGEX;
+        this.caseSensitive = true;
     }
 
     public RouteMapping(String pattern, String changelistName, PatternType patternType)
@@ -38,6 +43,15 @@ public class RouteMapping
         this.pattern = pattern;
         this.changelistName = changelistName;
         this.patternType = patternType;
+        this.caseSensitive = true;
+    }
+
+    public RouteMapping(String pattern, String changelistName, PatternType patternType, boolean caseSensitive)
+    {
+        this.pattern = pattern;
+        this.changelistName = changelistName;
+        this.patternType = patternType;
+        this.caseSensitive = caseSensitive;
     }
 
     public String getPattern()
@@ -70,6 +84,16 @@ public class RouteMapping
         this.patternType = patternType;
     }
 
+    public boolean isCaseSensitive()
+    {
+        return this.caseSensitive;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive)
+    {
+        this.caseSensitive = caseSensitive;
+    }
+
     public boolean matches(String path)
     {
         if (this.pattern.isBlank()) {
@@ -78,8 +102,15 @@ public class RouteMapping
 
         try {
             return switch (this.patternType) {
-                case REGEX -> Pattern.compile(this.pattern).matcher(path).find();
-                case GLOB -> FileSystems.getDefault().getPathMatcher("glob:" + this.pattern).matches(Path.of(path));
+                case REGEX -> {
+                    int flags = this.caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
+                    yield Pattern.compile(this.pattern, flags).matcher(path).find();
+                }
+                case GLOB -> {
+                    String effectivePattern = this.caseSensitive ? this.pattern : this.pattern.toLowerCase();
+                    String effectivePath = this.caseSensitive ? path : path.toLowerCase();
+                    yield FileSystems.getDefault().getPathMatcher("glob:" + effectivePattern).matches(Path.of(effectivePath));
+                }
             };
         } catch (IllegalArgumentException ignored) {
             return false;
@@ -101,12 +132,13 @@ public class RouteMapping
 
         return Objects.equals(this.pattern, that.pattern)
             && Objects.equals(this.changelistName, that.changelistName)
-            && this.patternType == that.patternType;
+            && this.patternType == that.patternType
+            && this.caseSensitive == that.caseSensitive;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(this.pattern, this.changelistName, this.patternType);
+        return Objects.hash(this.pattern, this.changelistName, this.patternType, this.caseSensitive);
     }
 }

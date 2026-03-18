@@ -39,6 +39,12 @@ public class ChangelistRouterSettingsPanel
         ComboBox<PatternType> typeCombo = new ComboBox<>(PatternType.values());
         this.table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(typeCombo));
 
+        // Case Sensitive column editor
+        ComboBox<Boolean> caseSensitiveCombo = new ComboBox<>(new Boolean[]{Boolean.TRUE, Boolean.FALSE});
+        this.table.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(caseSensitiveCombo));
+        this.table.getColumnModel().getColumn(3).setPreferredWidth(110);
+        this.table.getColumnModel().getColumn(3).setMaxWidth(110);
+
         // Changelist Name column editor — populate changelists when editing begins
         ComboBox<String> changelistCombo = new ComboBox<>();
         changelistCombo.setEditable(true);
@@ -92,7 +98,7 @@ public class ChangelistRouterSettingsPanel
             });
 
         // Test match column — initially hidden, shown when test path is non-empty
-        this.testMatchColumn = this.table.getColumnModel().getColumn(3);
+        this.testMatchColumn = this.table.getColumnModel().getColumn(4);
         this.testMatchColumn.setPreferredWidth(80);
         this.testMatchColumn.setMaxWidth(90);
 
@@ -172,7 +178,7 @@ public class ChangelistRouterSettingsPanel
         List<RouteMapping> copy = new ArrayList<>();
 
         for (RouteMapping m : this.mappings) {
-            copy.add(new RouteMapping(m.getPattern(), m.getChangelistName(), m.getPatternType()));
+            copy.add(new RouteMapping(m.getPattern(), m.getChangelistName(), m.getPatternType(), m.isCaseSensitive()));
         }
 
         return copy;
@@ -183,7 +189,7 @@ public class ChangelistRouterSettingsPanel
         this.mappings.clear();
 
         for (RouteMapping m : newMappings) {
-            this.mappings.add(new RouteMapping(m.getPattern(), m.getChangelistName(), m.getPatternType()));
+            this.mappings.add(new RouteMapping(m.getPattern(), m.getChangelistName(), m.getPatternType(), m.isCaseSensitive()));
         }
 
         this.tableModel.fireTableDataChanged();
@@ -214,7 +220,7 @@ public class ChangelistRouterSettingsPanel
     private class RouteMappingTableModel extends AbstractTableModel
     {
 
-        private final String[] columnNames = {"Type", "Pattern", "Changelist Name", "Test match"};
+        private final String[] columnNames = {"Type", "Pattern", "Changelist Name", "Case Sensitive", "Test match"};
 
         @Override
         public int getRowCount()
@@ -225,7 +231,7 @@ public class ChangelistRouterSettingsPanel
         @Override
         public int getColumnCount()
         {
-            return 4;
+            return 5;
         }
 
         @Override
@@ -237,7 +243,7 @@ public class ChangelistRouterSettingsPanel
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex)
         {
-            return columnIndex != 3;
+            return columnIndex != 4;
         }
 
         @Override
@@ -249,7 +255,8 @@ public class ChangelistRouterSettingsPanel
                 case 0 -> mapping.getPatternType();
                 case 1 -> mapping.getPattern();
                 case 2 -> mapping.getChangelistName();
-                case 3 -> {
+                case 3 -> mapping.isCaseSensitive();
+                case 4 -> {
                     String testPath = ChangelistRouterSettingsPanel.this.testPathField.getText();
 
                     if (testPath == null || testPath.isBlank()) {
@@ -275,6 +282,7 @@ public class ChangelistRouterSettingsPanel
                 case 0 -> mapping.setPatternType(aValue instanceof PatternType pt ? pt : PatternType.REGEX);
                 case 1 -> mapping.setPattern(aValue instanceof String s ? s : "");
                 case 2 -> mapping.setChangelistName(aValue instanceof String s ? s : "");
+                case 3 -> mapping.setCaseSensitive(aValue instanceof Boolean b ? b : true);
             }
 
             fireTableCellUpdated(rowIndex, columnIndex);

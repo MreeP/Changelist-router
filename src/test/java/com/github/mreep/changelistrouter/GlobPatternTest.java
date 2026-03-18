@@ -187,4 +187,21 @@ public class GlobPatternTest
         assertEquals("JVM Files", ChangelistRouterListener.findMatchingChangelist("src/Main.scala", mappings));
         assertNull(ChangelistRouterListener.findMatchingChangelist("src/Main.py", mappings));
     }
+
+    @Test
+    public void caseInsensitiveGlobMatchesIgnoringCase()
+    {
+        List<RouteMapping> mappings = List.of(new RouteMapping("**/*.java", "Java Files", PatternType.GLOB, false));
+        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.java", mappings));
+        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.JAVA", mappings));
+        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.Java", mappings));
+    }
+
+    @Test
+    public void caseSensitiveGlobDoesNotMatchDifferentCase()
+    {
+        List<RouteMapping> mappings = List.of(new RouteMapping("**/*.java", "Java Files", PatternType.GLOB, true));
+        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.java", mappings));
+        assertNull(ChangelistRouterListener.findMatchingChangelist("src/Main.JAVA", mappings));
+    }
 }
