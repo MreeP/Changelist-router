@@ -12,6 +12,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +26,7 @@ public class ChangelistRouterSettingsPanel
     private final RouteMappingTableModel tableModel = new RouteMappingTableModel();
     private final JBTable table = new JBTable(this.tableModel);
     private final JTextField testPathField = new JTextField();
+    private final TableColumn testMatchColumn;
     private final JComponent component;
 
     public ChangelistRouterSettingsPanel(Project project)
@@ -89,20 +91,21 @@ public class ChangelistRouterSettingsPanel
                 }
             });
 
-        // Match column renderer
+        // Test match column — initially hidden, shown when test path is non-empty
+        this.testMatchColumn = this.table.getColumnModel().getColumn(3);
+        this.testMatchColumn.setPreferredWidth(80);
+        this.testMatchColumn.setMaxWidth(90);
+
         DefaultTableCellRenderer matchRenderer = new DefaultTableCellRenderer()
         {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
             {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
                 setHorizontalAlignment(SwingConstants.CENTER);
 
-                String testPath = ChangelistRouterSettingsPanel.this.testPathField.getText();
-
-                if (testPath == null || testPath.isBlank()) {
-                    setText("");
-                } else if (Boolean.TRUE.equals(value)) {
+                if (Boolean.TRUE.equals(value)) {
                     setText("✓");
 
                     if (!isSelected) {
@@ -116,37 +119,34 @@ public class ChangelistRouterSettingsPanel
                     }
                 }
 
-                return c;
+                return this;
             }
         };
 
-        this.table.getColumnModel().getColumn(3).setCellRenderer(matchRenderer);
-        this.table.getColumnModel().getColumn(3).setPreferredWidth(60);
-        this.table.getColumnModel().getColumn(3).setMaxWidth(70);
+        this.testMatchColumn.setCellRenderer(matchRenderer);
+        this.table.getColumnModel().removeColumn(this.testMatchColumn);
 
-        // Test path field
-        DocumentListener refreshListener = new DocumentListener()
+        // Test path field — toggles test match column visibility
+        this.testPathField.getDocument().addDocumentListener(new DocumentListener()
         {
             @Override
             public void insertUpdate(DocumentEvent e)
             {
-                ChangelistRouterSettingsPanel.this.tableModel.fireTableDataChanged();
+                ChangelistRouterSettingsPanel.this.updateTestMatchColumnVisibility();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e)
             {
-                ChangelistRouterSettingsPanel.this.tableModel.fireTableDataChanged();
+                ChangelistRouterSettingsPanel.this.updateTestMatchColumnVisibility();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e)
             {
-                ChangelistRouterSettingsPanel.this.tableModel.fireTableDataChanged();
+                ChangelistRouterSettingsPanel.this.updateTestMatchColumnVisibility();
             }
-        };
-
-        this.testPathField.getDocument().addDocumentListener(refreshListener);
+        });
 
         JPanel testPathPanel = new JPanel(new BorderLayout(8, 0));
 
@@ -189,10 +189,32 @@ public class ChangelistRouterSettingsPanel
         this.tableModel.fireTableDataChanged();
     }
 
+    private void updateTestMatchColumnVisibility()
+    {
+        String testPath = this.testPathField.getText();
+        boolean hasTestPath = testPath != null && !testPath.isBlank();
+        boolean columnVisible = false;
+
+        for (int i = 0; i < this.table.getColumnModel().getColumnCount(); i++) {
+            if (this.table.getColumnModel().getColumn(i) == this.testMatchColumn) {
+                columnVisible = true;
+                break;
+            }
+        }
+
+        if (hasTestPath && !columnVisible) {
+            this.table.getColumnModel().addColumn(this.testMatchColumn);
+        } else if (!hasTestPath && columnVisible) {
+            this.table.getColumnModel().removeColumn(this.testMatchColumn);
+        }
+
+        this.tableModel.fireTableDataChanged();
+    }
+
     private class RouteMappingTableModel extends AbstractTableModel
     {
 
-        private final String[] columnNames = {"Type", "Pattern", "Changelist Name", "Match"};
+        private final String[] columnNames = {"Type", "Pattern", "Changelist Name", "Test match"};
 
         @Override
         public int getRowCount()
