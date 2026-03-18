@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [1.0.1]
+### Changed
+- Updated README.md
+
 ## [1.0.0]
 ### Added
 - Automatic routing of VCS changes to changelists based on file path patterns
