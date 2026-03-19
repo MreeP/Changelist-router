@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [1.0.2]
+### Fixed
+- Lowered minimum IDE version from 2025.2 to 2023.2 for wider compatibility
+- Removed upper IDE version cap to support IntelliJ 2025.3+ and future versions
+
 ## [1.0.1]
 
 ### Changed
