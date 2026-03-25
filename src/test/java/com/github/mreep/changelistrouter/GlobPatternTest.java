@@ -154,6 +154,36 @@ public class GlobPatternTest
     }
 
     @Test
+    public void doubleStarMatchesZeroDirectories()
+    {
+        List<RouteMapping> mappings = List.of(new RouteMapping("test/**/*.ts", "Test TS", PatternType.GLOB));
+        assertEquals("Test TS", ChangelistRouterListener.findMatchingChangelist("test/first.ts", mappings));
+        assertEquals("Test TS", ChangelistRouterListener.findMatchingChangelist("test/sub/first.ts", mappings));
+        assertEquals("Test TS", ChangelistRouterListener.findMatchingChangelist("test/a/b/first.ts", mappings));
+        assertNull(ChangelistRouterListener.findMatchingChangelist("other/first.ts", mappings));
+    }
+
+    @Test
+    public void multipleDoubleStarsMatchZeroDirectories()
+    {
+        List<RouteMapping> mappings = List.of(new RouteMapping("tests/**/View/**/*.ts", "View Tests", PatternType.GLOB));
+        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/unit/View/components/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/View/components/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/unit/View/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/View/App.ts", mappings));
+        assertNull(ChangelistRouterListener.findMatchingChangelist("src/View/App.ts", mappings));
+    }
+
+    @Test
+    public void patternStartingWithDoubleStarsMatchZeroDirectories()
+    {
+        List<RouteMapping> mappings = List.of(new RouteMapping("**/View/*.ts", "View Tests", PatternType.GLOB));
+        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/unit/View/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("View/App.ts", mappings));
+        assertNull(ChangelistRouterListener.findMatchingChangelist("App.ts", mappings));
+    }
+
+    @Test
     public void singleStarMatchesHiddenFiles()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("*", "All Files", PatternType.GLOB));
