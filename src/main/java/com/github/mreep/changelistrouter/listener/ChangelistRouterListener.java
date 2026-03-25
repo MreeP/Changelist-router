@@ -1,14 +1,17 @@
 package com.github.mreep.changelistrouter.listener;
 
+import com.github.mreep.changelistrouter.ChangelistRouter;
 import com.github.mreep.changelistrouter.settings.ChangelistRouterSettings;
 import com.github.mreep.changelistrouter.settings.RouteMapping;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListListener;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 public class ChangelistRouterListener implements ChangeListListener
 {
@@ -38,68 +41,6 @@ public class ChangelistRouterListener implements ChangeListListener
             return;
         }
 
-        ChangeListManager clm = ChangeListManager.getInstance(this.project);
-        Map<String, List<Change>> routedChanges = new HashMap<>();
-
-        String basePath = this.project.getBasePath();
-
-        for (Change change : changes) {
-            String path = ChangelistRouterListener.getChangePath(change);
-
-            if (path == null) {
-                continue;
-            }
-
-            if (basePath != null) {
-                path = Path.of(basePath).relativize(Path.of(path)).toString();
-            }
-
-            String target = ChangelistRouterListener.findMatchingChangelist(path, mappings);
-
-            if (target == null) {
-                continue;
-            }
-
-            routedChanges.computeIfAbsent(target, k -> new ArrayList<>()).add(change);
-        }
-
-        for (Map.Entry<String, List<Change>> entry : routedChanges.entrySet()) {
-            String changelistName = entry.getKey();
-            List<Change> changesToMove = entry.getValue();
-
-            LocalChangeList targetList = clm.getChangeLists()
-                .stream()
-                .filter(cl -> cl.getName().equals(changelistName))
-                .findFirst()
-                .orElseGet(() -> clm.addChangeList(changelistName, ""));
-
-            clm.moveChangesTo(targetList, changesToMove.toArray(new Change[0]));
-        }
-    }
-
-    @Nullable
-    private static String getChangePath(Change change)
-    {
-        if (change.getVirtualFile() != null) {
-            return change.getVirtualFile().getPath();
-        }
-
-        if (change.getAfterRevision() != null) {
-            return change.getAfterRevision().getFile().getPath();
-        }
-
-        return null;
-    }
-
-    @Nullable
-    public static String findMatchingChangelist(@NotNull String path, @NotNull List<RouteMapping> mappings)
-    {
-        for (RouteMapping mapping : mappings) {
-            if (mapping.matches(path)) {
-                return mapping.getChangelistName();
-            }
-        }
-
-        return null;
+        ChangelistRouter.routeChanges(this.project, changes, mappings);
     }
 }

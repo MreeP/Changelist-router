@@ -1,7 +1,10 @@
 package com.github.mreep.changelistrouter.settings;
 
+import com.github.mreep.changelistrouter.ChangelistRouter;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +49,26 @@ public class ChangelistRouterConfigurable implements Configurable
     public void apply()
     {
         ChangelistRouterSettings settings = ChangelistRouterSettings.getInstance(this.project);
-        settings.getState().setMappings(new ArrayList<>(this.panel.getMappings()));
+        List<RouteMapping> newMappings = new ArrayList<>(this.panel.getMappings());
+        settings.getState().setMappings(newMappings);
+
+        this.rerouteDefaultChangelist(newMappings);
+    }
+
+    private void rerouteDefaultChangelist(List<RouteMapping> mappings)
+    {
+        if (mappings.isEmpty()) {
+            return;
+        }
+
+        ChangeListManager clm = ChangeListManager.getInstance(this.project);
+        LocalChangeList defaultList = clm.getDefaultChangeList();
+
+        if (defaultList.getChanges().isEmpty()) {
+            return;
+        }
+
+        ChangelistRouter.routeChanges(this.project, defaultList.getChanges(), mappings);
     }
 
     @Override

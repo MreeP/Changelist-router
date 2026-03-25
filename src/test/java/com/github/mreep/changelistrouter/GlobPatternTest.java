@@ -1,6 +1,6 @@
 package com.github.mreep.changelistrouter;
 
-import com.github.mreep.changelistrouter.listener.ChangelistRouterListener;
+import com.github.mreep.changelistrouter.ChangelistRouter;
 import com.github.mreep.changelistrouter.settings.PatternType;
 import com.github.mreep.changelistrouter.settings.RouteMapping;
 import org.junit.Test;
@@ -17,221 +17,221 @@ public class GlobPatternTest
     public void matchesSimpleExtension()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("*.java", "Java Files", PatternType.GLOB));
-        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("Main.java", mappings));
+        assertEquals("Java Files", ChangelistRouter.findMatchingChangelist("Main.java", mappings));
     }
 
     @Test
     public void matchesDoubleStarPattern()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("**/*.java", "Java Files", PatternType.GLOB));
-        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/main/Main.java", mappings));
+        assertEquals("Java Files", ChangelistRouter.findMatchingChangelist("src/main/Main.java", mappings));
     }
 
     @Test
     public void matchesBraceAlternatives()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("**/*.{ts,js}", "JS/TS Files", PatternType.GLOB));
-        assertEquals("JS/TS Files", ChangelistRouterListener.findMatchingChangelist("src/app.ts", mappings));
-        assertEquals("JS/TS Files", ChangelistRouterListener.findMatchingChangelist("src/app.js", mappings));
+        assertEquals("JS/TS Files", ChangelistRouter.findMatchingChangelist("src/app.ts", mappings));
+        assertEquals("JS/TS Files", ChangelistRouter.findMatchingChangelist("src/app.js", mappings));
     }
 
     @Test
     public void matchesNestedTestPaths()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("modules/*/Tests/**/*.java", "Module Tests", PatternType.GLOB));
-        assertEquals("Module Tests", ChangelistRouterListener.findMatchingChangelist("modules/core/Tests/unit/MyTest.java", mappings));
+        assertEquals("Module Tests", ChangelistRouter.findMatchingChangelist("modules/core/Tests/unit/MyTest.java", mappings));
     }
 
     @Test
     public void doesNotMatchWhenPatternDoesNotFit()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("*.java", "Java Files", PatternType.GLOB));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("src/Main.kt", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("src/Main.kt", mappings));
     }
 
     @Test
     public void skipsInvalidPatterns()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("[invalid", "Bad Glob", PatternType.GLOB), new RouteMapping("**/*.kt", "Kotlin Files", PatternType.GLOB));
-        assertEquals("Kotlin Files", ChangelistRouterListener.findMatchingChangelist("src/Main.kt", mappings));
+        assertEquals("Kotlin Files", ChangelistRouter.findMatchingChangelist("src/Main.kt", mappings));
     }
 
     @Test
     public void matchesRelativePathWithDirectoryPrefix()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("testowy/**/*.xml", "Testowy XML", PatternType.GLOB));
-        assertEquals("Testowy XML", ChangelistRouterListener.findMatchingChangelist("testowy/sub/pliczek.xml", mappings));
+        assertEquals("Testowy XML", ChangelistRouter.findMatchingChangelist("testowy/sub/pliczek.xml", mappings));
     }
 
     @Test
     public void matchesRelativePathWithSingleLevel()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("testowy/*.xml", "Testowy XML", PatternType.GLOB));
-        assertEquals("Testowy XML", ChangelistRouterListener.findMatchingChangelist("testowy/pliczek.xml", mappings));
+        assertEquals("Testowy XML", ChangelistRouter.findMatchingChangelist("testowy/pliczek.xml", mappings));
     }
 
     @Test
     public void matchesDeeplyNestedRelativePath()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("testowy/**/*.xml", "Testowy XML", PatternType.GLOB));
-        assertEquals("Testowy XML", ChangelistRouterListener.findMatchingChangelist("testowy/sub/dir/pliczek.xml", mappings));
+        assertEquals("Testowy XML", ChangelistRouter.findMatchingChangelist("testowy/sub/dir/pliczek.xml", mappings));
     }
 
     @Test
     public void doesNotMatchOutsideTargetDirectory()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("testowy/**/*.xml", "Testowy XML", PatternType.GLOB));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("other/pliczek.xml", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("other/pliczek.xml", mappings));
     }
 
     @Test
     public void matchesSrcDirectoryGlob()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("src/**/*.java", "Source Files", PatternType.GLOB));
-        assertEquals("Source Files", ChangelistRouterListener.findMatchingChangelist("src/main/java/com/example/App.java", mappings));
+        assertEquals("Source Files", ChangelistRouter.findMatchingChangelist("src/main/java/com/example/App.java", mappings));
     }
 
     @Test
     public void singleStarDoesNotCrossDirectoryBoundaries()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("src/*.java", "Top-level Source", PatternType.GLOB));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("src/main/App.java", mappings));
-        assertEquals("Top-level Source", ChangelistRouterListener.findMatchingChangelist("src/App.java", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("src/main/App.java", mappings));
+        assertEquals("Top-level Source", ChangelistRouter.findMatchingChangelist("src/App.java", mappings));
     }
 
     @Test
     public void starDotStarMatchesFilesContainingDot()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("*.*", "Dotted Files", PatternType.GLOB));
-        assertEquals("Dotted Files", ChangelistRouterListener.findMatchingChangelist("Main.java", mappings));
-        assertEquals("Dotted Files", ChangelistRouterListener.findMatchingChangelist("config.yaml", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("Makefile", mappings));
+        assertEquals("Dotted Files", ChangelistRouter.findMatchingChangelist("Main.java", mappings));
+        assertEquals("Dotted Files", ChangelistRouter.findMatchingChangelist("config.yaml", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("Makefile", mappings));
     }
 
     @Test
     public void questionMarkMatchesExactlyOneCharacter()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("foo.?", "Single Ext", PatternType.GLOB));
-        assertEquals("Single Ext", ChangelistRouterListener.findMatchingChangelist("foo.a", mappings));
-        assertEquals("Single Ext", ChangelistRouterListener.findMatchingChangelist("foo.z", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("foo.ab", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("foo.", mappings));
+        assertEquals("Single Ext", ChangelistRouter.findMatchingChangelist("foo.a", mappings));
+        assertEquals("Single Ext", ChangelistRouter.findMatchingChangelist("foo.z", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("foo.ab", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("foo.", mappings));
     }
 
     @Test
     public void bracketExpressionMatchesSingleCharacter()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("[abc].txt", "ABC", PatternType.GLOB));
-        assertEquals("ABC", ChangelistRouterListener.findMatchingChangelist("a.txt", mappings));
-        assertEquals("ABC", ChangelistRouterListener.findMatchingChangelist("b.txt", mappings));
-        assertEquals("ABC", ChangelistRouterListener.findMatchingChangelist("c.txt", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("d.txt", mappings));
+        assertEquals("ABC", ChangelistRouter.findMatchingChangelist("a.txt", mappings));
+        assertEquals("ABC", ChangelistRouter.findMatchingChangelist("b.txt", mappings));
+        assertEquals("ABC", ChangelistRouter.findMatchingChangelist("c.txt", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("d.txt", mappings));
     }
 
     @Test
     public void bracketRangeMatchesCharacterRange()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("file[0-9].txt", "Numbered", PatternType.GLOB));
-        assertEquals("Numbered", ChangelistRouterListener.findMatchingChangelist("file3.txt", mappings));
-        assertEquals("Numbered", ChangelistRouterListener.findMatchingChangelist("file0.txt", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("filea.txt", mappings));
+        assertEquals("Numbered", ChangelistRouter.findMatchingChangelist("file3.txt", mappings));
+        assertEquals("Numbered", ChangelistRouter.findMatchingChangelist("file0.txt", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("filea.txt", mappings));
     }
 
     @Test
     public void bracketNegationExcludesCharacters()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("[!0-9].txt", "Non-digit", PatternType.GLOB));
-        assertEquals("Non-digit", ChangelistRouterListener.findMatchingChangelist("a.txt", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("3.txt", mappings));
+        assertEquals("Non-digit", ChangelistRouter.findMatchingChangelist("a.txt", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("3.txt", mappings));
     }
 
     @Test
     public void doubleStarMatchesZeroOrMoreDirectories()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("src/**", "All Source", PatternType.GLOB));
-        assertEquals("All Source", ChangelistRouterListener.findMatchingChangelist("src/Main.java", mappings));
-        assertEquals("All Source", ChangelistRouterListener.findMatchingChangelist("src/com/example/Main.java", mappings));
+        assertEquals("All Source", ChangelistRouter.findMatchingChangelist("src/Main.java", mappings));
+        assertEquals("All Source", ChangelistRouter.findMatchingChangelist("src/com/example/Main.java", mappings));
     }
 
     @Test
     public void doubleStarMatchesZeroDirectories()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("test/**/*.ts", "Test TS", PatternType.GLOB));
-        assertEquals("Test TS", ChangelistRouterListener.findMatchingChangelist("test/first.ts", mappings));
-        assertEquals("Test TS", ChangelistRouterListener.findMatchingChangelist("test/sub/first.ts", mappings));
-        assertEquals("Test TS", ChangelistRouterListener.findMatchingChangelist("test/a/b/first.ts", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("other/first.ts", mappings));
+        assertEquals("Test TS", ChangelistRouter.findMatchingChangelist("test/first.ts", mappings));
+        assertEquals("Test TS", ChangelistRouter.findMatchingChangelist("test/sub/first.ts", mappings));
+        assertEquals("Test TS", ChangelistRouter.findMatchingChangelist("test/a/b/first.ts", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("other/first.ts", mappings));
     }
 
     @Test
     public void multipleDoubleStarsMatchZeroDirectories()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("tests/**/View/**/*.ts", "View Tests", PatternType.GLOB));
-        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/unit/View/components/App.ts", mappings));
-        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/View/components/App.ts", mappings));
-        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/unit/View/App.ts", mappings));
-        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/View/App.ts", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("src/View/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouter.findMatchingChangelist("tests/unit/View/components/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouter.findMatchingChangelist("tests/View/components/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouter.findMatchingChangelist("tests/unit/View/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouter.findMatchingChangelist("tests/View/App.ts", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("src/View/App.ts", mappings));
     }
 
     @Test
     public void patternStartingWithDoubleStarsMatchZeroDirectories()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("**/View/*.ts", "View Tests", PatternType.GLOB));
-        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("tests/unit/View/App.ts", mappings));
-        assertEquals("View Tests", ChangelistRouterListener.findMatchingChangelist("View/App.ts", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouter.findMatchingChangelist("tests/unit/View/App.ts", mappings));
+        assertEquals("View Tests", ChangelistRouter.findMatchingChangelist("View/App.ts", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("App.ts", mappings));
     }
 
     @Test
     public void singleStarMatchesHiddenFiles()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("*", "All Files", PatternType.GLOB));
-        assertEquals("All Files", ChangelistRouterListener.findMatchingChangelist(".gitignore", mappings));
-        assertEquals("All Files", ChangelistRouterListener.findMatchingChangelist(".login", mappings));
+        assertEquals("All Files", ChangelistRouter.findMatchingChangelist(".gitignore", mappings));
+        assertEquals("All Files", ChangelistRouter.findMatchingChangelist(".login", mappings));
     }
 
     @Test
     public void doubleStarSlashStarMatchesAllNestedFiles()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("**/*Test*.java", "Test Files", PatternType.GLOB));
-        assertEquals("Test Files", ChangelistRouterListener.findMatchingChangelist("src/test/java/MyTest.java", mappings));
-        assertEquals("Test Files", ChangelistRouterListener.findMatchingChangelist("src/TestRunner.java", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("src/Main.java", mappings));
+        assertEquals("Test Files", ChangelistRouter.findMatchingChangelist("src/test/java/MyTest.java", mappings));
+        assertEquals("Test Files", ChangelistRouter.findMatchingChangelist("src/TestRunner.java", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("src/Main.java", mappings));
     }
 
     @Test
     public void singleStarMatchesPartialFileName()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("src/*Controller.java", "Controllers", PatternType.GLOB));
-        assertEquals("Controllers", ChangelistRouterListener.findMatchingChangelist("src/UserController.java", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("src/UserService.java", mappings));
+        assertEquals("Controllers", ChangelistRouter.findMatchingChangelist("src/UserController.java", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("src/UserService.java", mappings));
     }
 
     @Test
     public void braceGroupWithMultipleAlternatives()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("**/*.{java,kt,scala}", "JVM Files", PatternType.GLOB));
-        assertEquals("JVM Files", ChangelistRouterListener.findMatchingChangelist("src/Main.java", mappings));
-        assertEquals("JVM Files", ChangelistRouterListener.findMatchingChangelist("src/Main.kt", mappings));
-        assertEquals("JVM Files", ChangelistRouterListener.findMatchingChangelist("src/Main.scala", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("src/Main.py", mappings));
+        assertEquals("JVM Files", ChangelistRouter.findMatchingChangelist("src/Main.java", mappings));
+        assertEquals("JVM Files", ChangelistRouter.findMatchingChangelist("src/Main.kt", mappings));
+        assertEquals("JVM Files", ChangelistRouter.findMatchingChangelist("src/Main.scala", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("src/Main.py", mappings));
     }
 
     @Test
     public void caseInsensitiveGlobMatchesIgnoringCase()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("**/*.java", "Java Files", PatternType.GLOB, false));
-        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.java", mappings));
-        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.JAVA", mappings));
-        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.Java", mappings));
+        assertEquals("Java Files", ChangelistRouter.findMatchingChangelist("src/Main.java", mappings));
+        assertEquals("Java Files", ChangelistRouter.findMatchingChangelist("src/Main.JAVA", mappings));
+        assertEquals("Java Files", ChangelistRouter.findMatchingChangelist("src/Main.Java", mappings));
     }
 
     @Test
     public void caseSensitiveGlobDoesNotMatchDifferentCase()
     {
         List<RouteMapping> mappings = List.of(new RouteMapping("**/*.java", "Java Files", PatternType.GLOB, true));
-        assertEquals("Java Files", ChangelistRouterListener.findMatchingChangelist("src/Main.java", mappings));
-        assertNull(ChangelistRouterListener.findMatchingChangelist("src/Main.JAVA", mappings));
+        assertEquals("Java Files", ChangelistRouter.findMatchingChangelist("src/Main.java", mappings));
+        assertNull(ChangelistRouter.findMatchingChangelist("src/Main.JAVA", mappings));
     }
 }
